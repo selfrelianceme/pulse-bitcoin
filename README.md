@@ -1,1 +1,1 @@
-# pulse-bitcoin
+# Pulse bitcoin payments
