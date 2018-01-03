@@ -70,7 +70,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 	}
 
 	public function check_transaction(array $request, array $server, $headers = []){
-		Log::info('Blockdash IPN', [
+		Log::info('Pulse Bitcoin IPN', [
 			'request' => $request
 		]);
 	}
