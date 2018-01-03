@@ -1,8 +1,8 @@
 {
   "name": "selfreliance/pulse-bitcoin",
   "type": "library",
-  "version": "0.0.6",
-  "description": "Dash coin payment system for laravel",
+  "version": "0.0.1",
+  "description": "Pulse bitcoin for laravel",
   "keywords": ["laravel"],
   "homepage": "https://github.com/selfrelianceme/pulse-bitcoin",
   "license": "MIT",
