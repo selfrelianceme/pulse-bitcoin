@@ -31,9 +31,6 @@ class PulseBitcoin implements PulseBitcoinInterface
 	}
 
 	function balance($currency = 'BTC'){
-		if($currency != 'BTC'){
-			throw new \Exception('Only currency dash');	
-		}
 		$response = $this->client->request('POST', 'getbalance');
 		$body     = $response->getBody();
 		$code     = $response->getStatusCode();
@@ -48,7 +45,6 @@ class PulseBitcoin implements PulseBitcoinInterface
 
 	function form($payment_id, $sum, $units='BTC'){
 		$sum = number_format($sum, 2, ".", "");
-
 		$response = $this->client->request('POST', 'createnewaddress', [
 			'form_params' => [
 				'key'      => 12345,
@@ -135,5 +131,32 @@ class PulseBitcoin implements PulseBitcoinInterface
 
 	public function cancel_payment(Request $request){
 
+	}
+
+	public function history(){
+		$response = $this->client->request('POST', 'history', [
+			'form_params' => [
+				'key'      => 12345,
+		    ]
+		]);
+		$body     = $response->getBody();
+		$code     = $response->getStatusCode();
+		$resp     = json_decode($body->getContents());
+
+		return $resp;
+	}
+
+	public function balance_address($address){
+		$response = $this->client->request('POST', 'getaddressbalance', [
+			'form_params' => [
+				'key'     => 12345,
+				'address' => $address,
+		    ]
+		]);
+		$body     = $response->getBody();
+		$code     = $response->getStatusCode();
+		$resp     = json_decode($body->getContents());
+
+		return $resp;
 	}
 }
