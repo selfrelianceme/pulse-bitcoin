@@ -124,7 +124,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 			echo $request['tx']['txid']."|continue";
 		}
 
-		return true;
+		// return true;
 	}
 
 	public function validateIPN(array $post_data, array $server_data){
@@ -201,7 +201,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 			];
 			return $PassData;
 		}else{
-			// throw new \Exception($resp->response->message);	
+			throw new \Exception($resp);	
 		}
 	}
 
