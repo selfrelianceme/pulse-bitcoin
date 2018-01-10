@@ -74,14 +74,14 @@ class PulseBitcoin implements PulseBitcoinInterface
 		Log::info('Pulse Bitcoin IPN', [
 			'request' => $request
 		]);
-
+		$textReponce = 'Server error pulse bitcoin';
 		try{
 			$is_complete = $this->validateIPN($request, $server);
 			if($is_complete){
 				// TODO
 				// change seach transaction
 				$found_history = false;
-				foreach($request['tx']['output_addresses'] as $address){
+				foreach($request['tx']['Address'] as $address){
 					$history = Users_History::
 						where('type', 'CREATE_DEPOSIT')->
 						whereIn('payment_system', [1,2])->
@@ -97,23 +97,23 @@ class PulseBitcoin implements PulseBitcoinInterface
 				}
 				if($found_history){
 					$PassData                     = new \stdClass();
-					$PassData->amount             = $request['tx']['value'];
+					$PassData->amount             = $request['tx']['Amount'];
 					$PassData->payment_id         = $found_history;
-					$PassData->transaction        = $request['tx']['txid'];
+					$PassData->transaction        = $request['tx']['TxID'];
 					$PassData->add_info           = [
 						"full_data_ipn" => json_encode($request)
 					];
 					event(new PulseBitcoinPaymentIncome($PassData));
-					echo $request['tx']['txid']."|success";
+					$textReponce = $request['tx']['_id']."|success";
 				}else{
 					Log::error('Pulse Bitcoin IPN', [
 						'message' => 'Don\'t find history',
 						'data'    => $request
 					]);
-					echo $request['tx']['txid']."|error";	
+					$textReponce = $request['tx']['_id']."|error_find_history";	
 				}
 			}else{
-				echo $request['tx']['txid']."|error";	
+				$textReponce = $request['tx']['_id']."|error";	
 			}			
 		}catch(PulseBitcoinException $e){
 			Log::error('Pulse Bitcoin IPN', [
@@ -121,31 +121,43 @@ class PulseBitcoin implements PulseBitcoinInterface
 				'data'    => $request
 			]);
 			
-			echo $request['tx']['txid']."|continue";
+			$textReponce = $request['tx']['_id']."|continue|".$e->getMessage();
 		}
 
-		// return true;
+		return \Response::json($textReponce, "200");
 	}
 
 	public function validateIPN(array $post_data, array $server_data){
-		if($post_data['tx']['confirmations'] < 6){
-			throw new PulseBitcoinException("Missing the required number of confirmations ".$post_data['tx']['confirmations'].' of 6');
+		if(!isset($post_data['tx']['Confirmations'])){
+			throw new PulseBitcoinException("Missing the required confirmations");
 		}
 
-		if(!isset($post_data['tx']['txid'])){
+		if($post_data['tx']['Confirmations'] < 6){
+			throw new PulseBitcoinException("Missing the required number of confirmations ".$post_data['tx']['Confirmations'].' of 6');
+		}
+
+		if(!isset($post_data['tx']['TxID'])){
 			throw new PulseBitcoinException("Need transaction");	
 		}
 
-		if($post_data['tx']['value'] <= 0){
+		if($post_data['tx']['Amount'] <= 0){
 			throw new PulseBitcoinException("Need amount for transaction");	
 		}
 
-		if($post_data['tx']['timestamp'] == false){
-			throw new PulseBitcoinException("Need timestamp");	
+		if(!isset($post_data['tx']['HashPay'])){
+			throw new PulseBitcoinException("The transaction need HashPay");	
 		}
 
-		if(count($post_data['tx']['output_addresses']) < 1){
-			throw new PulseBitcoinException("Need output_addresses");	
+		if($post_data['tx']['HashPay'] != md5($post_data['tx']['_id'].Config::get('pulsebitcoin.secret_key'))){
+			throw new PulseBitcoinException("The transaction failed to authenticate");	
+		}
+
+		// if($post_data['tx']['timestamp'] == false){
+		// 	throw new PulseBitcoinException("Need timestamp");	
+		// }
+
+		if(count($post_data['tx']['Address']) < 1){
+			throw new PulseBitcoinException("Need Address");	
 		}
 
 		return true;
