@@ -42,7 +42,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 			throw new \Exception($resp->res->msg);
 		}
 		$unconfirmed = 0;
-		if(property_exists($resp, 'unconfirmed')){
+		if(property_exists($resp->result, 'unconfirmed')){
 			$unconfirmed = $resp->result->unconfirmed;
 		}
 		return $resp->result->confirmed+$unconfirmed;
@@ -106,7 +106,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 					event(new PulseBitcoinPaymentIncome($PassData));
 					$textReponce = $request['tx']['_id']."|success";
 				}else{
-					Log::error('Pulse Bitcoin IPN', [
+					Log::notice('Pulse Bitcoin IPN', [
 						'message' => 'Don\'t find history',
 						'data'    => $request
 					]);
@@ -114,9 +114,9 @@ class PulseBitcoin implements PulseBitcoinInterface
 				}
 			}else{
 				$textReponce = $request['tx']['_id']."|error";	
-			}			
+			}		
 		}catch(PulseBitcoinException $e){
-			Log::error('Pulse Bitcoin IPN', [
+			Log::notice('Pulse Bitcoin IPN', [
 				'message' => $e->getMessage(),
 				'data'    => $request
 			]);
@@ -175,7 +175,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 				'address'  => $address,
 				'amount'   => $amount,
 				'fee'      => $fee,
-				'password' => 'password'
+				'password' => Config::get('pulsebitcoin.password')
 		    ]
 		]);
 		// $response = $this->client->request('POST', 'paytomany', [
@@ -195,7 +195,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 		$code     = $response->getStatusCode();
 		$resp     = json_decode($body->getContents());
 
-		Log::info('PulseBitcoin', [
+		Log::info('PulseBitcoin send transaction', [
 			'request' => $resp
 		]);
 
@@ -213,12 +213,55 @@ class PulseBitcoin implements PulseBitcoinInterface
 			];
 			return $PassData;
 		}else{
-			throw new \Exception($resp);	
+			throw new \Exception($resp->error->message);	
 		}
 	}
 
 	public function cancel_payment(Request $request){
 
+	}
+	/**
+	 *
+	 *[
+	 *	'address', amount
+	 *]
+	 *
+	 * 
+	 */
+	public function send_multi($address_and_amount){
+		$fee = 0.0003;
+		$response = $this->client->request('POST', 'paytomany', [
+			'json' => [
+				'key'      => (string)Config::get('pulsebitcoin.secret_key'),
+				'outputs'  => $address_and_amount,
+				'fee'      => $fee,
+				'password' => Config::get('pulsebitcoin.password')
+		    ]
+		]);
+		$body     = $response->getBody();
+		$code     = $response->getStatusCode();
+		$resp     = json_decode($body->getContents());
+
+		Log::info('PulseBitcoin send multi', [
+			'request' => $resp
+		]);
+
+		if(property_exists($resp, 'code')){
+			throw new \Exception($resp->res->msg);
+		}
+
+		if(property_exists($resp, 'result') && $resp->result[0] == true){
+			$PassData              = new \stdClass();
+			$PassData->transaction = $resp->result[1];
+			$PassData->sending     = true;
+			$PassData->add_info    = [
+				"fee"       => $fee,
+				"full_data" => $resp
+			];
+			return $PassData;
+		}else{
+			throw new \Exception($resp->error->message);	
+		}
 	}
 
 	public function history(){
