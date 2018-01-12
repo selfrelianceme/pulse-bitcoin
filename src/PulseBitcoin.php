@@ -74,7 +74,11 @@ class PulseBitcoin implements PulseBitcoinInterface
 		Log::info('Pulse Bitcoin IPN', [
 			'request' => $request
 		]);
-		$textReponce = 'Server error pulse bitcoin';
+		$textReponce = [
+			'_id'    => null,
+			'msg'    => 'Server error pulse bitcoin',
+			'status' => 'error'
+		];
 		try{
 			$is_complete = $this->validateIPN($request, $server);
 			if($is_complete){
@@ -89,7 +93,6 @@ class PulseBitcoin implements PulseBitcoinInterface
 						where('transaction', '')->
 						where('data_info->address', $address)->
 						value('id');
-					dump($history);
 					if($history){
 						$found_history = $history;
 						break;
@@ -104,24 +107,39 @@ class PulseBitcoin implements PulseBitcoinInterface
 						"full_data_ipn" => json_encode($request)
 					];
 					event(new PulseBitcoinPaymentIncome($PassData));
-					$textReponce = $request['tx']['_id']."|success";
+					$textReponce = [
+						'_id'    => $request['tx']['_id'],
+						'msg'    => 'Payment successfully confirm',
+						'status' => 'success'
+					];
 				}else{
 					Log::notice('Pulse Bitcoin IPN', [
 						'message' => 'Don\'t find history',
 						'data'    => $request
 					]);
-					$textReponce = $request['tx']['_id']."|error_find_history";	
+					$textReponce = [
+						'_id'    => $request['tx']['_id'],
+						'msg'    => 'Don\'t find in history',
+						'status' => 'error_find_history'
+					];
 				}
 			}else{
-				$textReponce = $request['tx']['_id']."|error";	
+				$textReponce = [
+					'_id'    => $request['tx']['_id'],
+					'status' => 'error'
+				];
 			}		
 		}catch(PulseBitcoinException $e){
-			Log::notice('Pulse Bitcoin IPN', [
+			Log::notice('Pulse Bitcoin Exception', [
 				'message' => $e->getMessage(),
 				'data'    => $request
 			]);
 			
-			$textReponce = $request['tx']['_id']."|continue|".$e->getMessage();
+			$textReponce = [
+				'_id'    => (isset($request['tx']['_id']))?$request['tx']['_id']:null,
+				'msg'    => $e->getMessage(),
+				'status' => 'continue'
+			];
 		}
 
 		return \Response::json($textReponce, "200");
@@ -140,12 +158,20 @@ class PulseBitcoin implements PulseBitcoinInterface
 			throw new PulseBitcoinException("Need transaction");	
 		}
 
+		if(!isset($post_data['tx']['Amount'])){
+			throw new PulseBitcoinException("Missing the required amount");
+		}
+
 		if($post_data['tx']['Amount'] <= 0){
 			throw new PulseBitcoinException("Need amount for transaction");	
 		}
 
 		if(!isset($post_data['tx']['HashPay'])){
 			throw new PulseBitcoinException("The transaction need HashPay");	
+		}
+
+		if(!isset($post_data['tx']['_id'])){
+			throw new PulseBitcoinException("The transaction need identy");	
 		}
 
 		if($post_data['tx']['HashPay'] != md5($post_data['tx']['_id'].Config::get('pulsebitcoin.secret_key'))){
