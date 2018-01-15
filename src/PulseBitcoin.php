@@ -84,24 +84,17 @@ class PulseBitcoin implements PulseBitcoinInterface
 			if($is_complete){
 				// TODO
 				// change seach transaction
-				$found_history = false;
-				foreach($request['tx']['Address'] as $address){
-					$history = Users_History::
-						where('type', 'CREATE_DEPOSIT')->
-						whereIn('payment_system', [1,2])->
-						where('status', 'pending')->
-						where('transaction', '')->
-						where('data_info->address', $address)->
-						value('id');
-					if($history){
-						$found_history = $history;
-						break;
-					}
-				}
-				if($found_history){
+				$history = Users_History::
+					where('type', 'CREATE_DEPOSIT')->
+					whereIn('payment_system', [1,2])->
+					where('status', 'pending')->
+					where('transaction', '')->
+					where('data_info->address', $request['tx']['Address'])->
+					value('id');
+				if($history){
 					$PassData                     = new \stdClass();
 					$PassData->amount             = $request['tx']['Amount'];
-					$PassData->payment_id         = $found_history;
+					$PassData->payment_id         = $history;
 					$PassData->transaction        = $request['tx']['TxID'];
 					$PassData->add_info           = [
 						"full_data_ipn" => json_encode($request)
@@ -182,7 +175,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 		// 	throw new PulseBitcoinException("Need timestamp");	
 		// }
 
-		if(count($post_data['tx']['Address']) < 1){
+		if(!isset($post_data['tx']['Address'])){
 			throw new PulseBitcoinException("Need Address");	
 		}
 
