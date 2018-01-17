@@ -80,7 +80,7 @@ class PulseBitcoin implements PulseBitcoinInterface
 			'status' => 'error'
 		];
 		try{
-			$is_complete = $this->validateIPN($request, $server);
+			$is_complete = $this->validateIPN($request, $server, $ip);
 			if($is_complete){
 				// TODO
 				// change seach transaction
@@ -138,7 +138,8 @@ class PulseBitcoin implements PulseBitcoinInterface
 		return \Response::json($textReponce, "200");
 	}
 
-	public function validateIPN(array $post_data, array $server_data){
+	public function validateIPN(array $post_data, array $server_data, $ip){
+		dd($ip);
 		if(!isset($post_data['tx']['Confirmations'])){
 			throw new PulseBitcoinException("Missing the required confirmations");
 		}
@@ -167,6 +168,10 @@ class PulseBitcoin implements PulseBitcoinInterface
 			throw new PulseBitcoinException("The transaction need identy");	
 		}
 
+		if($ip != Config::get('pulsebitcoin.ip_server')){
+			throw new PulseBitcoinException("Not verify the IP address");		
+		}
+
 		if($post_data['tx']['HashPay'] != md5($post_data['tx']['_id'].Config::get('pulsebitcoin.secret_key'))){
 			throw new PulseBitcoinException("The transaction failed to authenticate");	
 		}
@@ -183,7 +188,8 @@ class PulseBitcoin implements PulseBitcoinInterface
 	}
 
 	public function validateIPNRequest(Request $request) {
-        return $this->check_transaction($request->all(), $request->server(), $request->headers, $request->ip());
+        $ip = real_ip();
+        return $this->check_transaction($request->all(), $request->server(), $request->headers, $ip);
     }
 
 	public function send_money($payment_id, $amount, $address, $currency){
