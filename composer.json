@@ -1,7 +1,7 @@
 {
   "name": "selfreliance/pulse-bitcoin",
   "type": "library",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Pulse bitcoin for laravel",
   "keywords": ["laravel"],
   "homepage": "https://github.com/selfrelianceme/pulse-bitcoin",

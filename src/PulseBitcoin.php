@@ -144,6 +144,11 @@ class PulseBitcoin implements PulseBitcoinInterface
 			throw new PulseBitcoinException("Missing the required confirmations");
 		}
 
+		/**
+		 * TODO
+		 * add confirm to db
+		 */
+
 		if($post_data['tx']['Confirmations'] < 6){
 			throw new PulseBitcoinException("Missing the required number of confirmations ".$post_data['tx']['Confirmations'].' of 6');
 		}
@@ -220,9 +225,9 @@ class PulseBitcoin implements PulseBitcoinInterface
 		$code     = $response->getStatusCode();
 		$resp     = json_decode($body->getContents());
 
-		Log::info('PulseBitcoin send transaction', [
-			'request' => $resp
-		]);
+		// Log::info('PulseBitcoin send transaction', [
+		// 	'request' => $resp
+		// ]);
 
 		if(property_exists($resp, 'code')){
 			throw new \Exception($resp->res->msg);
@@ -267,9 +272,9 @@ class PulseBitcoin implements PulseBitcoinInterface
 		$code     = $response->getStatusCode();
 		$resp     = json_decode($body->getContents());
 
-		Log::info('PulseBitcoin send multi', [
-			'request' => $resp
-		]);
+		// Log::info('PulseBitcoin send multi', [
+		// 	'request' => $resp
+		// ]);
 
 		if(property_exists($resp, 'code')){
 			throw new \Exception($resp->res->msg);
