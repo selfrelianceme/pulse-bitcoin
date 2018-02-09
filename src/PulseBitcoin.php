@@ -139,7 +139,6 @@ class PulseBitcoin implements PulseBitcoinInterface
 	}
 
 	public function validateIPN(array $post_data, array $server_data, $ip){
-		dd($ip);
 		if(!isset($post_data['tx']['Confirmations'])){
 			throw new PulseBitcoinException("Missing the required confirmations");
 		}
