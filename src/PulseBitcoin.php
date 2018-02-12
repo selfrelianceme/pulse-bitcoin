@@ -11,6 +11,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 
 use Selfreliance\PulseBitcoin\Events\PulseBitcoinPaymentIncome;
 use Selfreliance\PulseBitcoin\Events\PulseBitcoinPaymentCancel;
+use Selfreliance\PulseBitcoin\Events\PulseBitcoinPaymentConfirms;
 
 use Selfreliance\PulseBitcoin\PulseBitcoinInterface;
 use Selfreliance\PulseBitcoin\Exceptions\PulseBitcoinException;
@@ -142,11 +143,13 @@ class PulseBitcoin implements PulseBitcoinInterface
 		if(!isset($post_data['tx']['Confirmations'])){
 			throw new PulseBitcoinException("Missing the required confirmations");
 		}
-
-		/**
-		 * TODO
-		 * add confirm to db
-		 */
+		
+		$PassData                = new \stdClass();
+		$PassData->confirmations = $post_data['tx']['Confirmations'];
+		$PassData->transaction   = $post_data['tx']['TxID'];
+		$PassData->amount        = $post_data['tx']['Amount'];
+		$PassData->address       = $post_data['tx']['Address'];
+		event(new PulseBitcoinPaymentConfirms($PassData));
 
 		if($post_data['tx']['Confirmations'] < 6){
 			throw new PulseBitcoinException("Missing the required number of confirmations ".$post_data['tx']['Confirmations'].' of 6');
@@ -172,9 +175,9 @@ class PulseBitcoin implements PulseBitcoinInterface
 			throw new PulseBitcoinException("The transaction need identy");	
 		}
 
-		if($ip != Config::get('pulsebitcoin.ip_server')){
-			throw new PulseBitcoinException("Not verify the IP address");		
-		}
+		// if($ip != Config::get('pulsebitcoin.ip_server')){
+		// 	throw new PulseBitcoinException("Not verify the IP address");		
+		// }
 
 		if($post_data['tx']['HashPay'] != md5($post_data['tx']['_id'].Config::get('pulsebitcoin.secret_key'))){
 			throw new PulseBitcoinException("The transaction failed to authenticate");	
