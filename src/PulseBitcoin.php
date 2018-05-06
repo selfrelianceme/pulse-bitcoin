@@ -83,40 +83,50 @@ class PulseBitcoin implements PulseBitcoinInterface
 		try{
 			$is_complete = $this->validateIPN($request, $server, $ip);
 			if($is_complete){
+				
+				$PassData                     = new \stdClass();
+				$PassData->amount             = $request['tx']['Amount'];
+				$PassData->payment_id         = $request['tx']['Address'];
+				$PassData->transaction        = $request['tx']['TxID'];
+				$PassData->add_info           = [
+					"full_data_ipn" => json_encode($request)
+				];
+				event(new PulseBitcoinPaymentIncome($PassData));
+
 				// TODO
 				// change seach transaction
-				$history = Users_History::
-					where('type', 'CREATE_DEPOSIT')->
-					whereIn('payment_system', [1,2])->
-					where('status', 'pending')->
-					where('transaction', '')->
-					where('data_info->address', $request['tx']['Address'])->
-					value('id');
-				if($history){
-					$PassData                     = new \stdClass();
-					$PassData->amount             = $request['tx']['Amount'];
-					$PassData->payment_id         = $history;
-					$PassData->transaction        = $request['tx']['TxID'];
-					$PassData->add_info           = [
-						"full_data_ipn" => json_encode($request)
-					];
-					event(new PulseBitcoinPaymentIncome($PassData));
-					$textReponce = [
-						'_id'    => $request['tx']['_id'],
-						'msg'    => 'Payment successfully confirm',
-						'status' => 'success'
-					];
-				}else{
-					Log::notice('Pulse Bitcoin IPN', [
-						'message' => 'Don\'t find history',
-						'data'    => $request
-					]);
-					$textReponce = [
-						'_id'    => $request['tx']['_id'],
-						'msg'    => 'Don\'t find in history',
-						'status' => 'error_find_history'
-					];
-				}
+				// $history = Users_History::
+				// 	where('type', 'CREATE_DEPOSIT')->
+				// 	whereIn('payment_system', [1,2])->
+				// 	where('status', 'pending')->
+				// 	where('transaction', '')->
+				// 	where('data_info->address', $request['tx']['Address'])->
+				// 	value('id');
+				// if($history){
+				// 	$PassData                     = new \stdClass();
+				// 	$PassData->amount             = $request['tx']['Amount'];
+				// 	$PassData->payment_id         = $history;
+				// 	$PassData->transaction        = $request['tx']['TxID'];
+				// 	$PassData->add_info           = [
+				// 		"full_data_ipn" => json_encode($request)
+				// 	];
+				// 	event(new PulseBitcoinPaymentIncome($PassData));
+				// 	$textReponce = [
+				// 		'_id'    => $request['tx']['_id'],
+				// 		'msg'    => 'Payment successfully confirm',
+				// 		'status' => 'success'
+				// 	];
+				// }else{
+				// 	Log::notice('Pulse Bitcoin IPN', [
+				// 		'message' => 'Don\'t find history',
+				// 		'data'    => $request
+				// 	]);
+				// 	$textReponce = [
+				// 		'_id'    => $request['tx']['_id'],
+				// 		'msg'    => 'Don\'t find in history',
+				// 		'status' => 'error_find_history'
+				// 	];
+				// }
 			}else{
 				$textReponce = [
 					'_id'    => $request['tx']['_id'],
