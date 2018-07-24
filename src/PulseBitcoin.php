@@ -92,6 +92,12 @@ class PulseBitcoin implements PulseBitcoinInterface
 					"full_data_ipn" => json_encode($request)
 				];
 				event(new PulseBitcoinPaymentIncome($PassData));
+				
+				$textReponce = [
+					'_id'    => $request['tx']['_id'],
+					'msg'    => 'Payment successfully confirm',
+					'status' => 'success'
+				];
 
 				// TODO
 				// change seach transaction
